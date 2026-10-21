@@ -1,0 +1,461 @@
+/* ───────── 글로벌 노트 v1.1.0 — 저널 미니멀 ─────────
+   앱 테마와 무관하게 "따뜻한 종이 위의 잉크" 아이덴티티를 유지한다.
+   canvas #FAF9F6 · ink #2F3437 · line #E7E4DD · 포인트는 파스텔 태그만. */
+
+.gnx-panel,
+.gnx-toast {
+  --gnx-paper: #faf9f6;
+  --gnx-paper-2: #f1efe9;
+  --gnx-ink: #2f3437;
+  --gnx-ink-strong: #191919;
+  --gnx-muted: #8d867a;
+  --gnx-line: #e7e4dd;
+  --gnx-green-bg: #edf3ec;
+  --gnx-green-fg: #3e6b4f;
+  --gnx-blue-bg: #e1f3fe;
+  --gnx-blue-fg: #1d6091;
+  --gnx-red: #c0524d;
+  --gnx-serif: Georgia, "Noto Serif KR", "Times New Roman", serif;
+  --gnx-sans: -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Helvetica Neue", sans-serif;
+  font-family: var(--gnx-sans);
+}
+
+/* ── 툴바 버튼 아이콘 ── */
+.gnx-tb-icon { display: inline-flex; align-items: center; justify-content: center; }
+.gnx-tb-icon svg { width: 0.875rem; height: 0.875rem; }
+
+/* ── 2.5.0+ 버블 버튼: 채팅 설정(슬라이더) 버튼 옆, 앱의 .mari-window-bubble 모양 그대로 ── */
+.gnx-bubble { position: fixed; }
+.gnx-bubble[data-presentation="sheet"] .gnx-tb-icon svg { width: 1rem; height: 1rem; }
+/* 버블에는 활성(연결된 노트 있음) 표시를 두지 않는다 — 기본 채팅 버블과 똑같이 보이게 (사용자 결정) */
+/* ── 패널: 종이 카드 ── */
+.gnx-panel {
+  position: fixed;
+  z-index: 95; /* 2.5.0 버블(70)·플로팅 창(71+)·폰 시트(70)보다 위 */
+  display: none;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid var(--gnx-line);
+  background: var(--gnx-paper);
+  color: var(--gnx-ink);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.gnx-panel--open { display: flex; }
+
+.gnx-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--gnx-line);
+}
+.gnx-title-wrap { flex: 1; min-width: 0; }
+.gnx-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--gnx-serif);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--gnx-ink-strong);
+}
+.gnx-title svg { width: 15px; height: 15px; flex-shrink: 0; }
+.gnx-subtitle {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--gnx-muted);
+}
+.gnx-icon-btn {
+  border: 0;
+  background: transparent;
+  color: var(--gnx-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.gnx-icon-btn:hover { color: var(--gnx-ink-strong); background: var(--gnx-paper-2); }
+.gnx-icon-btn svg { width: 15px; height: 15px; display: block; }
+
+/* ── 검색 ── */
+.gnx-search-row {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gnx-line);
+}
+.gnx-search-input { font-size: 12px; }
+
+/* ── 목록: 경계선으로만 구분되는 스트립 ── */
+.gnx-list {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 0 8px;
+}
+.gnx-empty {
+  padding: 26px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--gnx-muted);
+  white-space: pre-line;
+}
+
+/* 노트 행 전용 스크롤 영역 — 약 8개 높이가 상한. 그 이상이면 여기만 스크롤되고
+   아래의 새 노트 에디터/버튼은 계속 보인다. */
+.gnx-rows {
+  max-height: 330px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* 아코디언이 열려 있는 동안은 행 제한을 풀어 편집/비교 공간을 넓힌다.
+   스크롤 컨테이너에서 완전히 벗어나야(overflow: visible) 휠/터치가
+   패널 스크롤로 자연스럽게 전달된다. */
+.gnx-rows--roomy {
+  max-height: none;
+  overflow: visible;
+}
+
+/* 새 노트 작성 중 접힌 목록 표시 */
+.gnx-collapsed {
+  padding: 8px 14px;
+  font-size: 10.5px;
+  color: var(--gnx-muted);
+  border-bottom: 1px solid var(--gnx-line);
+  background: var(--gnx-paper-2);
+}
+
+.gnx-item { border-bottom: 1px solid var(--gnx-line); }
+.gnx-item--drag { opacity: 0.45; background: var(--gnx-paper-2); }
+.gnx-item--new { border-bottom: 0; }
+
+.gnx-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 4px;
+  transition: background 0.12s ease;
+}
+.gnx-row:hover { background: #f5f3ee; }
+
+.gnx-grip {
+  flex-shrink: 0;
+  width: 18px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c9c3b6;
+  cursor: grab;
+  touch-action: none;
+}
+.gnx-grip:hover { color: var(--gnx-muted); }
+.gnx-grip:active { cursor: grabbing; }
+.gnx-grip--off { opacity: 0.3; pointer-events: none; }
+.gnx-grip svg { width: 13px; height: 13px; }
+
+.gnx-check {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--gnx-ink-strong);
+  cursor: pointer;
+}
+.gnx-check:disabled { cursor: not-allowed; opacity: 0.4; }
+
+.gnx-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 9px 2px 9px 4px;
+  text-align: left;
+  font-size: 12.5px;
+  font-family: inherit;
+}
+.gnx-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--gnx-ink);
+}
+
+.gnx-tag {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 7px;
+  border-radius: 9999px;
+}
+.gnx-tag--always { background: var(--gnx-green-bg); color: var(--gnx-green-fg); }
+.gnx-tag--kw { background: var(--gnx-blue-bg); color: var(--gnx-blue-fg); }
+
+.gnx-row-tokens {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--gnx-muted);
+}
+.gnx-chevron {
+  flex-shrink: 0;
+  color: #c9c3b6;
+  display: flex;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gnx-chevron svg { width: 12px; height: 12px; }
+.gnx-chevron--open { transform: rotate(180deg); }
+
+/* ── 아코디언 편집 영역 ── */
+.gnx-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  background: #f7f5f0;
+  border-top: 1px dashed var(--gnx-line);
+  animation: gnx-unfold 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gnx-item--new .gnx-editor { border-top: 0; }
+@keyframes gnx-unfold {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gnx-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--gnx-line);
+  background: #fff;
+  color: var(--gnx-ink);
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.12s ease;
+}
+.gnx-input:focus { border-color: #b9b2a2; }
+.gnx-input::placeholder { color: #b6b0a4; }
+.gnx-textarea { resize: vertical; min-height: 150px; }
+.gnx-kw-input { resize: none; }
+.gnx-name-input {
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
+  height: auto;
+}
+
+.gnx-token-line {
+  margin-top: -4px;
+  text-align: right;
+  font-size: 10.5px;
+  color: var(--gnx-muted);
+}
+
+/* ── 세그먼트 토글 ── */
+.gnx-seg {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--gnx-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.gnx-seg-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--gnx-muted);
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.gnx-seg-btn + .gnx-seg-btn { border-left: 1px solid var(--gnx-line); }
+.gnx-seg-btn--on { background: var(--gnx-ink-strong); color: #fff; }
+
+.gnx-kw-wrap { display: flex; flex-direction: column; gap: 4px; }
+.gnx-hint { font-size: 10px; color: var(--gnx-muted); line-height: 1.5; }
+
+.gnx-depth-row { display: flex; align-items: center; gap: 8px; }
+.gnx-depth-input { width: 38px; text-align: center; padding: 4px 4px; }
+.gnx-token-inline {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--gnx-muted);
+  white-space: nowrap;
+}
+
+/* ── 버튼 ── */
+.gnx-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gnx-line);
+}
+.gnx-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--gnx-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+}
+.gnx-btn:hover { background: var(--gnx-paper-2); color: var(--gnx-ink-strong); }
+.gnx-btn:active { transform: scale(0.98); }
+.gnx-btn--primary { background: var(--gnx-ink-strong); color: #fff; }
+.gnx-btn--primary:hover { background: #333; color: #fff; }
+.gnx-btn--primary:disabled { opacity: 0.5; cursor: default; }
+.gnx-btn--danger { color: var(--gnx-red); margin-right: auto; }
+.gnx-btn--danger:hover { background: #f7e9e8; color: var(--gnx-red); }
+
+/* ── 새 노트 ── */
+/* 새 노트 고정 바 (스크롤 밖 하단) */
+.gnx-add-bar {
+  flex-shrink: 0;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--gnx-line);
+  background: var(--gnx-paper);
+}
+.gnx-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px dashed #d4cfc3;
+  background: transparent;
+  color: var(--gnx-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.gnx-add:hover { background: var(--gnx-paper-2); color: var(--gnx-ink-strong); }
+.gnx-add svg { width: 12px; height: 12px; }
+
+/* ── 내용 + 편집기 펼치기 ── */
+.gnx-content-wrap { position: relative; }
+.gnx-expand-btn {
+  position: absolute;
+  right: 6px;
+  bottom: 8px;
+  border: 0;
+  background: transparent;
+  color: #c9c3b6;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 6px;
+  display: flex;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.gnx-expand-btn:hover { color: var(--gnx-ink-strong); background: var(--gnx-paper-2); }
+.gnx-expand-btn svg { width: 12px; height: 12px; }
+
+.gnx-expand-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000; /* 점 세개 메뉴(9999)보다 위 — 펼친 편집기가 항상 최상단 */
+  background: rgba(30, 28, 24, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: var(--gnx-sans, sans-serif);
+}
+.gnx-expand-card {
+  --gnx-paper: #faf9f6;
+  --gnx-paper-2: #f1efe9;
+  --gnx-ink: #2f3437;
+  --gnx-ink-strong: #191919;
+  --gnx-muted: #8d867a;
+  --gnx-line: #e7e4dd;
+  --gnx-serif: Georgia, "Noto Serif KR", "Times New Roman", serif;
+  --gnx-sans: -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Helvetica Neue", sans-serif;
+  font-family: var(--gnx-sans);
+  width: min(720px, 100%);
+  height: min(78vh, 640px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid var(--gnx-line);
+  background: var(--gnx-paper);
+  color: var(--gnx-ink);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+.gnx-expand-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--gnx-line);
+}
+.gnx-expand-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--gnx-serif);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--gnx-ink-strong);
+}
+.gnx-expand-textarea {
+  flex: 1;
+  margin: 12px 14px 0;
+  width: auto;
+  resize: none;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.gnx-expand-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px 12px;
+}
+.gnx-expand-foot .gnx-token-line { margin-top: 0; }
+
+/* ── 토스트 ── */
+.gnx-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 8px);
+  z-index: 9999;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--gnx-ink-strong);
+  color: #faf9f6;
+  font-size: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: min(420px, calc(100vw - 48px));
+}
+.gnx-toast--show { opacity: 1; transform: translate(-50%, 0); }
+.gnx-toast--error { background: var(--gnx-red); }

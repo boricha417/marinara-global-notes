@@ -190,6 +190,13 @@
     return out;
   }
 
+  /** 주입 깊이 입력값 → 정수. 0도 유효한 값("마지막 메시지 뒤")이라 `|| 4`로 처리하면 안 된다. 빈 칸은 기본 4. */
+  function parseDepth(raw) {
+    if (raw == null || String(raw).trim() === "") return 4;
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) && n >= 0 ? n : 4;
+  }
+
   async function saveNote({ id, name, content, mode, keywordsText, depth }) {
     const payload = {
       name,
@@ -198,7 +205,7 @@
       keys: parseKeywords(keywordsText),
       enabled: true,
       position: 2, // At Depth — 작가노트와 같은 방식으로 주입
-      depth: Math.max(0, Math.floor(Number(depth) || 4)),
+      depth: parseDepth(depth),
       role: "system",
       preventRecursion: true,
       excludeFromVectorization: true,
@@ -1355,5 +1362,5 @@
   } catch {}
 
   mount();
-  console.info("[글로벌 노트] v1.4.4 로드 완료");
+  console.info("[글로벌 노트] v1.4.5 로드 완료");
 })();
